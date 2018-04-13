@@ -46,46 +46,84 @@ var (
 	}
 )
 
+func NewLogInstance(decorators ...func(Logger) Logger) Logger {
+	inst := Logger{}
+	for _, decorator := range decorators {
+		inst = decorator(inst)
+	}
+	var logger *log.Logger
+	var segment *logSegment
+	if inst.logPath != "" {
+		segment = newLogSegment(inst.unit, inst.logPath)
+	}
+	if segment != nil {
+		logger = log.New(segment, "", log.LstdFlags|log.Lmicroseconds)
+		inst.segment = segment
+	} else {
+		logger = log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds)
+	}
+	inst.logger = logger
+	return inst
+}
+
 // Start returns a decorated innerLogger.
 func Start(decorators ...func(Logger) Logger) Logger {
 	if atomic.CompareAndSwapInt32(&started, 0, 1) {
-		loggerInstance = Logger{}
-		for _, decorator := range decorators {
-			loggerInstance = decorator(loggerInstance)
-		}
-		var logger *log.Logger
-		var segment *logSegment
-		if loggerInstance.logPath != "" {
-			segment = newLogSegment(loggerInstance.unit, loggerInstance.logPath)
-		}
-		if segment != nil {
-			logger = log.New(segment, "", log.LstdFlags|log.Lmicroseconds)
-		} else {
-			logger = log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds)
-		}
-		loggerInstance.logger = logger
+		loggerInstance = NewLogInstance(decorators...)
+		//loggerInstance = Logger{}
+		//for _, decorator := range decorators {
+		//	loggerInstance = decorator(loggerInstance)
+		//}
+		//var logger *log.Logger
+		//var segment *logSegment
+		//if loggerInstance.logPath != "" {
+		//	segment = newLogSegment(loggerInstance.unit, loggerInstance.logPath)
+		//}
+		//if segment != nil {
+		//	logger = log.New(segment, "", log.LstdFlags|log.Lmicroseconds)
+		//} else {
+		//	logger = log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds)
+		//}
+		//loggerInstance.logger = logger
 		return loggerInstance
 	}
 	//return nil
 	panic("Start() already called")
 }
 
+func (l Logger) Release() {
+	if l.printStack {
+		traceInfo := make([]byte, 1<<16)
+		n := runtime.Stack(traceInfo, true)
+		l.logger.Printf("%s", traceInfo[:n])
+		if l.isStdout {
+			log.Printf("%s", traceInfo[:n])
+		}
+	}
+	if l.segment != nil {
+		l.segment.Close()
+	}
+	l.segment = nil
+	l.logger = nil
+}
+
 // Stop stops the logger.
 func (l Logger) Stop() {
 	if atomic.CompareAndSwapInt32(&l.stopped, 0, 1) {
-		if l.printStack {
-			traceInfo := make([]byte, 1<<16)
-			n := runtime.Stack(traceInfo, true)
-			l.logger.Printf("%s", traceInfo[:n])
-			if l.isStdout {
-				log.Printf("%s", traceInfo[:n])
-			}
-		}
-		if l.segment != nil {
-			l.segment.Close()
-		}
-		l.segment = nil
-		l.logger = nil
+		l.Release()
+		//if l.printStack {
+		//	traceInfo := make([]byte, 1<<16)
+		//	n := runtime.Stack(traceInfo, true)
+		//	l.logger.Printf("%s", traceInfo[:n])
+		//	if l.isStdout {
+		//		log.Printf("%s", traceInfo[:n])
+		//	}
+		//}
+		//if l.segment != nil {
+		//	l.segment.Close()
+		//}
+		//l.segment = nil
+		//l.logger = nil
 		atomic.StoreInt32(&started, 0)
 	}
 }
@@ -198,6 +236,14 @@ type Logger struct {
 	unit       time.Duration
 	isStdout   bool
 	printStack bool
+}
+
+func (l Logger) Write(p []byte) (n int, err error) {
+	l.doPrintln(TRACE, string(p))
+	//if l.segment != nil {
+	//    return l.segment.Write(p)
+	//}
+	return
 }
 
 func (l Logger) Print(v ...interface{}) {
@@ -414,4 +460,8 @@ func Errorln(v ...interface{}) {
 func Fatalln(v ...interface{}) {
 	loggerInstance.doPrintln(FATAL, v...)
 	os.Exit(1)
+}
+
+func Write(p []byte) {
+	loggerInstance.Write(p)
 }
