@@ -240,9 +240,6 @@ type Logger struct {
 
 func (l Logger) Write(p []byte) (n int, err error) {
 	l.doPrintln(TRACE, string(p))
-	//if l.segment != nil {
-	//    return l.segment.Write(p)
-	//}
 	return
 }
 
