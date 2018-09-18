@@ -247,6 +247,13 @@ func (l Logger) Print(v ...interface{}) {
 	l.doPrintln(DEBUG, v...)
 }
 
+func (l Logger) Printf(format string, v ...interface{}) {
+	if l.logger == nil {
+	  return
+	}
+	l.logger.Printf(format, v...)
+}
+
 func (l Logger) doPrintf(level LogLevel, format string, v ...interface{}) {
 	if l.logger == nil {
 		return
