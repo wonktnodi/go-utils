@@ -72,7 +72,7 @@ func NewLogInstance(decorators ...func(Logger) Logger) Logger {
 func Start(decorators ...func(Logger) Logger) *LogAdaptor {
   if atomic.CompareAndSwapInt32(&started, 0, 1) {
     logger = NewLogInstance(decorators...)
-    loggerInstance = NewAdaptor(&logger, 4)
+    loggerInstance = NewAdaptorFromInstance(&logger, 4)
     return loggerInstance
   }
   //return nil
@@ -212,9 +212,16 @@ type LogAdaptor struct {
   calldepth int
 }
 
-func NewAdaptor(log *Logger, callDepth int) *LogAdaptor {
+func NewAdaptorFromInstance(log *Logger, callDepth int) *LogAdaptor {
   return &LogAdaptor{
     logger:    log,
+    calldepth: callDepth,
+  }
+}
+
+func NewAdaptor(callDepth int) *LogAdaptor {
+  return &LogAdaptor{
+    logger:    &logger,
     calldepth: callDepth,
   }
 }
