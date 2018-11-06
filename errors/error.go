@@ -46,5 +46,5 @@ func (e *ErrorC) Format(s fmt.State, verb rune) {
 }
 
 func (e *ErrorC) fullMessage() string {
-	return fmt.Sprintf("[%d]%s", e.code, e.message)
+	return fmt.Sprintf("%s[%d]", e.code, e.message)
 }

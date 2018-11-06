@@ -7,7 +7,7 @@
 .idea/**/workspace.xml
 .idea/**/tasks.xml
 .idea/dictionaries
-
+.idea/**/*
 # Sensitive or high-churn files:
 .idea/**/dataSources/
 .idea/**/dataSources.ids
@@ -16,6 +16,7 @@
 .idea/**/sqlDataSources.xml
 .idea/**/dynamic.xml
 .idea/**/uiDesigner.xml
+.idea/**/*.xml
 
 # Gradle:
 .idea/**/gradle.xml
@@ -159,3 +160,4 @@ Makefile
 glide.lock
 glide.yaml
 vendor/
+.history/**/*
