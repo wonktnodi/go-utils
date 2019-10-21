@@ -169,7 +169,7 @@ func (ls *logSegment) Write(p []byte) (n int, err error) {
       ls.logFile.Close()
       ls.logFile = nil
       os.Rename(ls.logFileName, val)
-
+      
       ls.logFile, err = os.Create(ls.logFileName)
       if err != nil {
         // log into stderr if we can't create new file
@@ -231,7 +231,7 @@ func (l *LogAdaptor) Print(v ...interface{}) {
 }
 
 func (l *LogAdaptor) Printf(format string, v ...interface{}) {
-  l.logger.Printf(format, v ...)
+  l.logger.Printf(format, v...)
 }
 
 func (l *LogAdaptor) Tracef(format string, v ...interface{}) {
@@ -304,6 +304,10 @@ func (l *LogAdaptor) SetCallDepth(callDepth int) {
   l.calldepth = callDepth
 }
 
+func (l *LogAdaptor) SetLevel(level LogLevel) {
+  SetLevel(*l.logger, level)
+}
+
 // Logger is the logger type.
 type Logger struct {
   logger     *log.Logger
@@ -368,11 +372,11 @@ func (l Logger) doPrintfN(callDepth int, level LogLevel, format string, v ...int
       } else {
         format = fmt.Sprintf("%3s [%s]: %s", tagName[level], path.Base(funcName), format)
       }
-
+      
     } else {
       format = fmt.Sprintf("%3s: %s", tagName[level], format)
     }
-
+    
     l.logger.Printf(format, v...)
     if l.isStdout {
       log.Printf(format, v...)
@@ -384,7 +388,7 @@ func (l Logger) doPrintfN(callDepth int, level LogLevel, format string, v ...int
 }
 
 func (l Logger) doPrintf(level LogLevel, format string, v ...interface{}) {
-  l.doPrintfN(3, level, format, v ...)
+  l.doPrintfN(3, level, format, v...)
   //if l.logger == nil {
   //  return
   //}
@@ -436,11 +440,11 @@ func (l Logger) doPrintlnN(callDepth int, level LogLevel, v ...interface{}) {
       } else {
         prefix = fmt.Sprintf("%3s [%s]: ", tagName[level], path.Base(funcName))
       }
-
+      
     } else {
       prefix = fmt.Sprintf("%3s: ", tagName[level])
     }
-
+    
     value := fmt.Sprintf("%s%s", prefix, fmt.Sprintln(v...))
     l.logger.Print(value)
     if l.isStdout {
@@ -500,6 +504,11 @@ func getRuntimeInfo(callDepth int) (string, string, int) {
     function = caller.Name()
   }
   return function, fn, ln
+}
+
+func SetLevel(l Logger, level LogLevel) Logger {
+  l.level = level
+  return l
 }
 
 // DebugLevel sets log level to debug.
