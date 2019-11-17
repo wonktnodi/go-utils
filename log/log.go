@@ -305,7 +305,7 @@ func (l *LogAdaptor) SetCallDepth(callDepth int) {
 }
 
 func (l *LogAdaptor) SetLevel(level LogLevel) {
-  SetLevel(*l.logger, level)
+  SetLevel(l.logger, level)
 }
 
 // Logger is the logger type.
@@ -506,9 +506,9 @@ func getRuntimeInfo(callDepth int) (string, string, int) {
   return function, fn, ln
 }
 
-func SetLevel(l Logger, level LogLevel) Logger {
+func SetLevel(l *Logger, level LogLevel) Logger {
   l.level = level
-  return l
+  return *l
 }
 
 // DebugLevel sets log level to debug.
